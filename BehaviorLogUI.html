@@ -1,0 +1,203 @@
+<!-- ================= หน้าบันทึกพฤติกรรม (ฉบับปรับปรุง: ไซส์พอดีคำ อ่านง่าย) ================= -->
+<div class="max-w-6xl mx-auto space-y-8 pb-10 animate-up">
+
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- ฝั่งซ้าย: ค้นหาและยอดรวม (5/12) -->
+    <div class="lg:col-span-5 space-y-6">
+      
+      <!-- ส่วนค้นหา -->
+      <div class="bg-white rounded-[2.5rem] shadow-xl p-8 border border-gray-100 space-y-6">
+        <div>
+          <label class="block text-xs font-black text-gray-400 mb-3 uppercase tracking-widest ml-1">ค้นหารหัสนักเรียน</label>
+          <div class="relative group">
+            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-xl text-orange-300 group-focus-within:text-orange-500 transition"></i>
+            <input type="text" id="pgLogIdInput" oninput="pgSearchStudent()" 
+              class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-6 text-2xl font-black text-gray-800 focus:outline-none focus:border-orange-400 transition-all shadow-inner" 
+              placeholder="0000">
+          </div>
+        </div>
+
+        <!-- การ์ดแสดงชื่อนักเรียน (ขนาดพอดีๆ) -->
+        <div id="pgLogResult" class="hidden p-6 bg-gradient-to-b from-orange-50 to-white rounded-[2rem] border border-orange-100 animate-up text-center shadow-sm">
+          <div class="w-20 h-20 bg-white rounded-2xl mx-auto mb-4 flex items-center justify-center text-3xl text-orange-500 shadow-md border border-orange-50">
+            <i class="fas fa-user-check"></i>
+          </div>
+          <h4 id="pgResName" class="text-2xl font-black text-orange-900 leading-tight"></h4>
+          <p id="pgResClass" class="text-xs font-bold text-orange-600 uppercase tracking-widest mt-1"></p>
+          <input type="hidden" id="pgSelectedName">
+          <input type="hidden" id="pgSelectedClass">
+        </div>
+      </div>
+
+      <!-- ส่วนคะแนนรวม (Balanced Score) -->
+      <div class="bg-slate-900 rounded-[2.5rem] p-10 text-center shadow-2xl border-b-8 border-orange-500 relative overflow-hidden">
+        <span class="text-slate-400 font-bold text-[10px] tracking-[0.2em] uppercase block mb-2">คะแนนรวมสุทธิรายการนี้</span>
+        <div id="pgTotalPoints" class="text-8xl font-black text-white tracking-tighter transition-all duration-500">0</div>
+      </div>
+    </div>
+
+    <!-- ฝั่งขวา: รายการเลือกพฤติกรรม (7/12) -->
+    <div class="lg:col-span-7 space-y-6">
+      <div class="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 flex flex-col h-full overflow-hidden">
+        
+        <!-- Header -->
+        <div class="p-8 border-b bg-gray-50/50 flex justify-between items-center">
+          <h3 class="font-black text-gray-700 text-lg uppercase tracking-tight">รายการความประพฤติ</h3>
+          <button onclick="addPgRow()" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg shadow-orange-100 transform hover:-translate-y-0.5">
+            <i class="fas fa-plus"></i> เพิ่มแถว
+          </button>
+        </div>
+        
+        <!-- พื้นที่เลือกรายการ -->
+        <div id="pgItemsContainer" class="p-8 space-y-4 max-h-[500px] overflow-y-auto custom-scroll bg-white">
+          <!-- Rows will be injected here -->
+        </div>
+
+        <!-- ปุ่มบันทึก -->
+        <div class="p-8 bg-white border-t">
+          <button onclick="submitPgLog()" id="pgBtnSave" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white py-6 rounded-[2rem] font-black text-xl shadow-xl transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3">
+            <i class="fas fa-save"></i> ยืนยันบันทึกข้อมูลเข้าสู่ระบบ
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let pgStudents = [];
+  let pgOptions = [];
+  let pgRowCounter = 0;
+
+  function initBehaviorLogPage() {
+    if (pgStudents.length === 0) {
+      google.script.run.withSuccessHandler(res => pgStudents = res.data).getAllStudentsForSearch();
+      google.script.run.withSuccessHandler(res => {
+        pgOptions = res.data;
+        resetPgForm();
+      }).getBehaviorOptions();
+    }
+  }
+
+  function pgSearchStudent() {
+    const val = document.getElementById('pgLogIdInput').value.trim();
+    const resDiv = document.getElementById('pgLogResult');
+    const found = pgStudents.find(s => s.id.toString() === val);
+    
+    if (found) {
+      resDiv.classList.remove('hidden');
+      document.getElementById('pgResName').innerText = found.name;
+      document.getElementById('pgResClass').innerText = `ชั้น ม.${found.grade}/${found.room}`;
+      document.getElementById('pgSelectedName').value = found.name;
+      document.getElementById('pgSelectedClass').value = `ม.${found.grade}/${found.room}`;
+    } else {
+      resDiv.classList.add('hidden');
+      document.getElementById('pgSelectedName').value = '';
+    }
+  }
+
+  function addPgRow() {
+    pgRowCounter++;
+    const container = document.getElementById('pgItemsContainer');
+    const div = document.createElement('div');
+    div.id = `pg-row-${pgRowCounter}`;
+    div.className = 'bg-slate-50 border border-slate-100 rounded-[1.8rem] p-6 relative animate-up shadow-sm';
+    div.innerHTML = `
+      <div class="grid grid-cols-1 gap-4">
+        <div>
+          <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-1 block">1. หมวดหมู่</label>
+          <select onchange="updatePgDetail(${pgRowCounter}, this.value)" class="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:border-orange-400 focus:outline-none transition-all cursor-pointer">
+            <option value="">-- เลือกหมวดหมู่ --</option>
+            <option value="0" class="text-emerald-600 font-bold">0: ทำความดี (+)</option>
+            <option value="U" class="text-indigo-600 font-bold">U: การแต่งกาย (-)</option>
+            <option value="1">1: พฤติกรรม (เบา)</option>
+            <option value="2">2: พฤติกรรม (กลาง)</option>
+            <option value="3">3: พฤติกรรม (หนัก)</option>
+            <option value="4">4: พฤติกรรม (รุนแรง)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-2 mb-1 block">2. รายละเอียดความประพฤติ</label>
+          <select id="pg-detail-${pgRowCounter}" onchange="calcPgTotal()" class="w-full bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-sm font-bold focus:border-orange-400 focus:outline-none transition-all disabled:opacity-50" disabled>
+            <option value="0">กรุณาเลือกหมวดหมู่ก่อน...</option>
+          </select>
+        </div>
+      </div>
+      <button onclick="removePgRow(${pgRowCounter})" class="absolute top-2 right-2 text-gray-300 hover:text-rose-500 transition-all"><i class="fas fa-times-circle text-lg"></i></button>
+    `;
+    container.appendChild(div);
+  }
+
+  function removePgRow(id) {
+    if(document.querySelectorAll('[id^="pg-row-"]').length <= 1) return;
+    document.getElementById(`pg-row-${id}`).remove();
+    calcPgTotal();
+  }
+
+  function updatePgDetail(rowId, cat) {
+    const sel = document.getElementById(`pg-detail-${rowId}`);
+    sel.innerHTML = '<option value="0">-- เลือกรายการความผิด --</option>';
+    if (!cat) { sel.disabled = true; return; }
+    
+    pgOptions.filter(o => o.level == cat).forEach(o => {
+      const p = parseInt(o.points);
+      const val = (cat === '0') ? p : -p;
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.text = `${o.code} | ${o.detail} (${val > 0 ? '+' : ''}${val})`;
+      opt.setAttribute('data-full', `${o.code} ${o.detail}`);
+      sel.appendChild(opt);
+    });
+    sel.disabled = false;
+  }
+
+  function calcPgTotal() {
+    let total = 0;
+    document.querySelectorAll('select[id^="pg-detail-"]').forEach(s => total += parseInt(s.value || 0));
+    const disp = document.getElementById('pgTotalPoints');
+    disp.innerText = (total > 0 ? '+' : '') + total;
+    disp.className = `text-8xl font-black tracking-tighter transition-all duration-500 ${total > 0 ? 'text-emerald-400' : (total < 0 ? 'text-rose-400' : 'text-white')}`;
+  }
+
+  function submitPgLog() {
+    const name = document.getElementById('pgSelectedName').value;
+    if (!name) return Swal.fire('Error', 'ไม่พบรหัสนักเรียน', 'error');
+    
+    let items = [];
+    document.querySelectorAll('select[id^="pg-detail-"]').forEach(s => {
+      if (s.value != 0) items.push(`${s.options[s.selectedIndex].getAttribute('data-full')} (${s.value > 0 ? '+' : ''}${s.value})`);
+    });
+    
+    if (items.length === 0) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกรายการพฤติกรรม', 'warning');
+
+    const btn = document.getElementById('pgBtnSave');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+
+    const data = {
+      studentId: document.getElementById('pgLogIdInput').value,
+      studentName: name,
+      studentClass: document.getElementById('pgSelectedClass').value,
+      items: items.join(' | '),
+      totalPoints: parseInt(document.getElementById('pgTotalPoints').innerText)
+    };
+
+    google.script.run.withSuccessHandler(res => {
+      btn.disabled = false; btn.innerHTML = '<i class="fas fa-save mr-2"></i> ยืนยันบันทึกข้อมูลเข้าสู่ระบบ';
+      if (res.status === 'success') {
+        Swal.fire({ title: 'สำเร็จ!', text: 'บันทึกข้อมูลเรียบร้อยแล้ว', icon: 'success', timer: 1500, showConfirmButton: false });
+        resetPgForm();
+      }
+    }).saveBehaviorLog(data);
+  }
+
+  function resetPgForm() {
+    document.getElementById('pgLogIdInput').value = '';
+    document.getElementById('pgLogResult').classList.add('hidden');
+    document.getElementById('pgItemsContainer').innerHTML = '';
+    document.getElementById('pgTotalPoints').innerText = '0';
+    document.getElementById('pgTotalPoints').className = 'text-8xl font-black text-white tracking-tighter';
+    addPgRow();
+  }
+</script>
