@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- CSS & Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body { font-family: 'Prompt', sans-serif; background-color: #f8fafc; margin: 0; overflow: hidden; }
+    .bg-sidebar { background: linear-gradient(180deg, #0f766e 0%, #0d9488 100%); }
+    .nav-item { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 16px; margin-bottom: 8px; cursor: pointer; border: none; width: 100%; text-align: left; }
+    .nav-item.active { background-color: rgba(255, 255, 255, 0.25); backdrop-filter: blur(8px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateX(5px); }
+    .nav-item:hover:not(.active) { background-color: rgba(255, 255, 255, 0.1); transform: scale(1.02); }
+    
+    /* Action Button Color */
+    .nav-action { background: linear-gradient(90deg, #f97316 0%, #fb923c 100%); }
+    .nav-action:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(249, 115, 22, 0.4); }
+    
+    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #99f6e4; border-radius: 10px; }
+    
+    @keyframes slideInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    .animate-up { animation: slideInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    
+    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #0d9488; border-radius: 50%; width: 35px; height: 35px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="flex h-screen w-full">
+
+  <!-- ================= SIDEBAR (เมนูข้าง) ================= -->
+  <aside id="sidebar" class="bg-sidebar text-white w-72 flex flex-col transition-all duration-500 shadow-2xl z-20 rounded-r-[2.5rem]">
+    <div class="h-28 flex items-center px-8 mt-4 mb-2">
+      <div class="w-14 h-14 rounded-2xl bg-white/95 shadow-xl flex items-center justify-center text-teal-700 text-3xl transform hover:rotate-12 transition-transform duration-300">
+        <i class="fas fa-mosque"></i>
+      </div>
+      <div class="ml-4 sidebar-text whitespace-nowrap overflow-hidden">
+        <h1 class="text-lg font-black tracking-tight">ฝ่ายปกครอง</h1>
+        <div class="h-1 w-12 bg-teal-300 rounded-full my-1"></div>
+        <h2 class="text-xs text-teal-100 font-medium opacity-80 uppercase tracking-widest">Sasanupatham</h2>
+      </div>
+    </div>
+
+    <nav class="flex-1 overflow-y-auto custom-scroll py-4 px-5 space-y-1">
+      <div class="text-[10px] text-teal-200 font-black px-4 mb-3 uppercase tracking-widest sidebar-text">บันทึกกิจกรรมประจำวัน</div>
+      
+      <!-- บันทึกพฤติกรรม -->
+      <button onclick="switchMenu('menu-behavior-log')" id="nav-behavior-log" class="nav-item nav-action flex items-center px-5 py-4 text-white mb-4 group shadow-lg">
+        <div class="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shadow-inner">
+          <i class="fas fa-user-clock text-xl"></i>
+        </div>
+        <div class="ml-3 sidebar-text">
+          <span class="text-sm font-bold block">บันทึกพฤติกรรม</span>
+          <span class="text-[9px] text-orange-50 font-light block opacity-80">BEHAVIOR LOG</span>
+        </div>
+      </button>
+
+      <!-- บันทึกการมาเรียน -->
+      <button onclick="switchMenu('menu-attendance')" id="nav-attendance" class="nav-item flex items-center px-5 py-4 text-white bg-cyan-600/20 hover:bg-cyan-600/40 border border-white/5 mb-1 group">
+        <div class="w-10 h-10 rounded-xl bg-cyan-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition"><i class="fas fa-address-card text-lg"></i></div>
+        <div class="ml-3 sidebar-text"><span class="text-sm font-bold block text-cyan-50">บันทึกการมาเรียน</span><span class="text-[9px] text-cyan-200 block mt-1">PDF SCANNER</span></div>
+      </button>
+
+      <!-- รายงานเพิ่มเติม -->
+      <button onclick="switchMenu('menu-report')" id="nav-report" class="nav-item flex items-center px-5 py-4 text-white bg-indigo-500/20 hover:bg-indigo-500/40 border border-white/5 group mb-1">
+        <div class="w-10 h-10 rounded-xl bg-indigo-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition text-white"><i class="fas fa-file-medical text-lg"></i></div>
+        <div class="ml-3 sidebar-text"><span class="text-sm font-bold block text-indigo-50">รายงานเพิ่มเติม</span><span class="text-[9px] text-indigo-200 block mt-1">DAILY REPORT</span></div>
+      </button>
+
+      <!-- ประวัติรายบุคคล -->
+      <button onclick="switchMenu('menu-360')" id="nav-360" class="nav-item flex items-center px-5 py-4 text-white bg-emerald-500/20 hover:bg-emerald-500/40 border border-white/5 group mb-1">
+        <div class="w-10 h-10 rounded-xl bg-emerald-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition"><i class="fas fa-id-card-alt text-lg"></i></div>
+        <div class="ml-3 sidebar-text"><span class="text-sm font-bold block text-emerald-50">ประวัติรายบุคคล</span><span class="text-[9px] text-emerald-200 block mt-1">STUDENT 360</span></div>
+      </button>
+
+      <!-- จัดการของกลาง (NEW! - ใต้ประวัติรายบุคคล) -->
+      <button onclick="switchMenu('menu-confiscated')" id="nav-confiscated" class="nav-item flex items-center px-5 py-4 text-white bg-rose-500/20 hover:bg-rose-500/40 border border-white/5 group mb-1">
+        <div class="w-10 h-10 rounded-xl bg-rose-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition text-white"><i class="fas fa-box-open text-lg"></i></div>
+        <div class="ml-3 sidebar-text"><span class="text-sm font-bold block text-rose-50">จัดการของกลาง</span><span class="text-[9px] text-rose-200 block mt-1">CONFISCATED ITEMS</span></div>
+      </button>
+
+      <div class="text-[10px] text-teal-200 font-black px-4 mb-3 mt-10 uppercase tracking-widest sidebar-text">ฐานข้อมูลโรงเรียน</div>
+      <button onclick="switchMenu('menu-student')" id="nav-student" class="nav-item flex items-center px-5 py-3.5 group"><div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition"><i class="fas fa-user-graduate text-lg"></i></div><span class="ml-4 sidebar-text text-sm font-bold">รายชื่อนักเรียน</span></button>
+      <button onclick="switchMenu('menu-behavior')" id="nav-behavior" class="nav-item flex items-center px-5 py-3.5 group"><div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition"><i class="fas fa-star text-lg"></i></div><span class="ml-4 sidebar-text text-sm font-bold">เกณฑ์คะแนน</span></button>
+    </nav>
+
+    <div class="p-8">
+      <button onclick="google.script.host.close()" class="w-full flex items-center justify-center bg-rose-400 hover:bg-rose-500 text-white px-4 py-4 rounded-[1.5rem] transition-all shadow-xl font-bold transform hover:-translate-y-1">
+        <i class="fas fa-power-off mr-2"></i><span class="sidebar-text text-[10px]">ปิดระบบ</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= MAIN CONTENT (ส่วนแสดงผลหลัก) ================= -->
+  <div class="flex-1 flex flex-col h-screen overflow-hidden bg-[#f1f5f9] relative">
+    
+    <!-- Header -->
+    <header class="h-20 bg-white shadow-sm flex items-center justify-between px-10 z-10 border-b border-gray-100">
+      <div class="flex items-center">
+        <button onclick="toggleSidebar()" class="text-gray-400 hover:text-teal-600 p-2.5 rounded-2xl hover:bg-teal-50 transition"><i class="fas fa-bars text-2xl"></i></button>
+        <div class="ml-5">
+          <h2 id="page-header-title" class="text-2xl font-black text-gray-800 tracking-tight">ระบบฝ่ายปกครอง</h2>
+          <p id="page-header-subtitle" class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Sasanupatham Administrator</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="text-right hidden md:block">
+          <p class="text-xs font-black text-gray-800">Administrator</p>
+          <p class="text-[9px] text-teal-600 font-bold">Online Status</p>
+        </div>
+        <div class="w-11 h-11 rounded-2xl bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-600 shadow-sm"><i class="fas fa-user-shield text-xl"></i></div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto custom-scroll p-8 md:p-10">
+      
+      <!-- View 1: รายชื่อนักเรียนรายห้อง (Grid) -->
+      <div id="view-student-grid" class="content-view hidden animate-up">
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-10 mb-10"><h3 class="text-xl font-black text-gray-700 mb-8 flex items-center"><span class="w-10 h-10 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center mr-4"><i class="fas fa-seedling"></i></span> มัธยมศึกษาตอนต้น</h3><div class="grid grid-cols-2 md:grid-cols-6 gap-6" id="ms-grid"></div></div>
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 p-10"><h3 class="text-xl font-black text-gray-700 mb-8 flex items-center"><span class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mr-4"><i class="fas fa-graduation-cap"></i></span> มัธยมศึกษาตอนปลาย</h3><div class="grid grid-cols-2 md:grid-cols-6 gap-6" id="hs-grid"></div></div>
+      </div>
+
+      <!-- View 2: ตารางรายชื่อนักเรียน -->
+      <div id="view-student-table" class="content-view hidden h-full">
+        <div class="bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 flex flex-col h-full overflow-hidden animate-up">
+          <div class="p-8 border-b flex justify-between items-center bg-white"><div class="flex items-center"><button onclick="showStudentGrid()" class="text-gray-500 bg-gray-50 border px-5 py-2.5 rounded-2xl font-bold text-sm mr-5"><i class="fas fa-chevron-left mr-2"></i>ย้อนกลับ</button><span id="current-class-title" class="text-2xl font-black text-gray-800"></span></div><button onclick="openForm('add')" class="bg-teal-500 hover:bg-teal-600 text-white px-7 py-3 rounded-2xl font-black text-sm shadow-lg transition">เพิ่มรายชื่อ</button></div>
+          <div id="loading-student" class="hidden flex flex-col justify-center items-center py-24"><div class="loader mb-4"></div><span class="text-gray-400 font-bold text-sm animate-pulse">กำลังดึงข้อมูล...</span></div>
+          <div class="overflow-x-auto h-full"><table class="min-w-full table-auto text-sm"><thead class="bg-gray-50 text-gray-400 font-black uppercase tracking-widest border-b text-[10px]"><tr><th class="px-8 py-5 text-left">รหัส</th><th class="px-8 py-5 text-left">ชื่อ-นามสกุล</th><th class="px-8 py-5 text-center">เพศ</th><th class="px-8 py-5 text-center">จัดการ</th></tr></thead><tbody id="student-table-body" class="divide-y divide-gray-50 bg-white"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- View Containers (โหลดจากไฟล์ UI อื่นๆ) -->
+      <div id="view-behavior-container" class="content-view hidden h-full animate-up"><?!= HtmlService.createHtmlOutputFromFile('BehaviorUI').getContent(); ?></div>
+      <div id="view-report-container" class="content-view hidden h-full animate-up"><?!= HtmlService.createHtmlOutputFromFile('ReportUI').getContent(); ?></div>
+      <div id="view-attendance-container" class="content-view hidden h-full animate-up"><?!= HtmlService.createHtmlOutputFromFile('AttendanceUI').getContent(); ?></div>
+      <div id="view-360-container" class="content-view hidden h-full animate-up"><?!= HtmlService.createHtmlOutputFromFile('Student360UI').getContent(); ?></div>
+      <div id="view-behavior-log-container" class="content-view hidden h-full animate-up"><?!= HtmlService.createHtmlOutputFromFile('BehaviorLogUI').getContent(); ?></div>
+      
+      <!-- View: ระบบจัดการของกลาง (NEW!) -->
+      <div id="view-confiscated-container" class="content-view hidden h-full animate-up"><?!= HtmlService.createHtmlOutputFromFile('ConfiscatedUI').getContent(); ?></div>
+
+    </main>
+  </div>
+
+  <!-- Modal สำหรับ เพิ่ม/แก้ไขนักเรียน -->
+  <div id="form-modal" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-md flex justify-center items-center p-4 z-50">
+    <div class="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md p-10 border-t-[10px] border-teal-500 relative animate-up">
+      <div class="flex justify-between items-center mb-8"><h3 id="form-title" class="text-2xl font-black text-gray-800">ข้อมูลนักเรียน</h3><button onclick="closeForm()" class="text-gray-300 hover:text-rose-500 transition"><i class="fas fa-times text-2xl"></i></button></div>
+      <form id="student-form" onsubmit="saveStudent(event)">
+        <input type="hidden" id="form-rowIdx">
+        <div class="space-y-5">
+          <div><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 block mb-1">รหัสประจำตัว *</label><input type="text" id="form-id" required class="w-full bg-slate-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm font-bold focus:outline-none focus:border-teal-500 shadow-inner"></div>
+          <div><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 block mb-1">ชื่อ-นามสกุล *</label><input type="text" id="form-name" required class="w-full bg-slate-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm font-bold focus:outline-none focus:border-teal-500 shadow-inner"></div>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 block mb-1">เพศ</label><select id="form-gender" class="w-full bg-slate-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm font-bold"><option value="ชาย">ชาย</option><option value="หญิง">หญิง</option></select></div>
+            <div><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 block mb-1">ระดับชั้น</label><select id="form-grade" class="w-full bg-slate-50 border border-gray-100 rounded-2xl px-5 py-3.5 text-sm font-bold"><option value="ม.1">ม.1</option><option value="ม.2">ม.2</option><option value="ม.3">ม.3</option><option value="ม.4">ม.4</option><option value="ม.5">ม.5</option><option value="ม.6">ม.6</option></select></div>
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-10 pt-6 border-t border-gray-50"><button type="button" onclick="closeForm()" class="px-6 py-3 rounded-2xl text-xs font-black text-gray-400 hover:bg-gray-50">ยกเลิก</button><button type="submit" id="btn-save" class="bg-teal-600 text-white px-8 py-3.5 rounded-2xl text-xs font-black shadow-xl">บันทึกข้อมูล</button></div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ================= SCRIPTS (ตรรกะหน้าเว็บ) ================= -->
+  <script>
+    let isSidebarOpen = true;
+
+    function toggleSidebar() { 
+      const sb = document.getElementById('sidebar'); 
+      const texts = document.querySelectorAll('.sidebar-text'); 
+      isSidebarOpen = !isSidebarOpen; 
+      sb.style.width = isSidebarOpen ? '288px' : '96px'; 
+      texts.forEach(el => el.style.display = isSidebarOpen ? 'block' : 'none'); 
+    }
+
+    function switchMenu(menuId) {
+      // 1. จัดการปุ่ม Active ใน Sidebar
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      const mapping = {
+        'menu-student': 'nav-student', 
+        'menu-behavior': 'nav-behavior', 
+        'menu-report': 'nav-report', 
+        'menu-attendance': 'nav-attendance', 
+        'menu-360': 'nav-360', 
+        'menu-behavior-log': 'nav-behavior-log',
+        'menu-confiscated': 'nav-confiscated'
+      };
+      const activeNav = document.getElementById(mapping[menuId]);
+      if(activeNav) activeNav.classList.add('active');
+
+      // 2. ปิดหน้าจออื่นๆ ทั้งหมด
+      document.querySelectorAll('.content-view').forEach(el => el.classList.add('hidden'));
+
+      // 3. เปิดหน้าจอที่เลือก
+      if(menuId === 'menu-student') {
+        document.getElementById('view-student-grid').classList.remove('hidden');
+        document.getElementById('page-header-title').innerText = 'รายชื่อนักเรียนรายห้อง';
+      } else if(menuId === 'menu-behavior-log') {
+        document.getElementById('view-behavior-log-container').classList.remove('hidden');
+        document.getElementById('page-header-title').innerText = 'บันทึกคะแนนพฤติกรรม';
+        if(typeof initBehaviorLogPage === 'function') initBehaviorLogPage();
+      } else if(menuId === 'menu-behavior') {
+        document.getElementById('view-behavior-container').classList.remove('hidden');
+        document.getElementById('page-header-title').innerText = 'จัดการเกณฑ์คะแนน';
+        if(typeof loadBehaviorData === 'function') loadBehaviorData();
+      } else if(menuId === 'menu-360') {
+        document.getElementById('view-360-container').classList.remove('hidden');
+        document.getElementById('page-header-title').innerText = 'ประวัติรายบุคคล (360)';
+      } else if(menuId === 'menu-attendance') {
+        document.getElementById('view-attendance-container').classList.remove('hidden');
+        document.getElementById('page-header-title').innerText = 'อัปโหลดสแกนการมาเรียน';
+      } else if(menuId === 'menu-report') {
+        document.getElementById('view-report-container').classList.remove('hidden');
+        document.getElementById('page-header-title').innerText = 'บันทึกรายงานเพิ่มเติม';
+        if(typeof loadRecentReports === 'function') loadRecentReports();
+      } else if(menuId === 'menu-confiscated') {
+        document.getElementById('view-confiscated-container').classList.remove('hidden');
+        document.getElementById('page-header-title').innerText = 'ระบบจัดการของกลาง';
+        if(typeof loadConfiscatedItems === 'function') loadConfiscatedItems();
+      }
+    }
+
+    // --- ส่วนตรรกะจัดการนักเรียน (Student Management) ---
+    let currentGrade = '', currentRoom = '', studentsData = [];
+
+    window.onload = function() { initDashboard(); switchMenu('menu-student'); }
+
+    function initDashboard() {
+      const msGrid = document.getElementById('ms-grid'); const hsGrid = document.getElementById('hs-grid');
+      msGrid.innerHTML = ''; hsGrid.innerHTML = '';
+      for(let i=1; i<=6; i++) {
+        for(let j=1; j<=2; j++) {
+          const btn = document.createElement('button'); const isMS = i <= 3;
+          btn.className = `flex flex-col items-center justify-center py-7 rounded-[2.5rem] bg-white border border-gray-50 shadow-sm hover:shadow-2xl transition-all transform hover:-translate-y-2 group relative overflow-hidden`;
+          btn.innerHTML = `<div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-3 ${isMS ? 'bg-teal-50 text-teal-500' : 'bg-indigo-50 text-indigo-500'} group-hover:scale-110 shadow-sm"><i class="fas ${isMS ? 'fa-book-reader' : 'fa-graduation-cap'} text-2xl"></i></div><span class="font-black text-gray-600 text-lg group-hover:text-gray-800 leading-none">ม.${i}/${j}</span>`;
+          btn.onclick = () => loadClassData(`ม.${i}`, j.toString());
+          if(isMS) msGrid.appendChild(btn); else hsGrid.appendChild(btn);
+        }
+      }
+    }
+
+    function showStudentGrid() { 
+      document.getElementById('view-student-table').classList.add('hidden'); 
+      document.getElementById('view-student-grid').classList.remove('hidden'); 
+    }
+
+    function loadClassData(grade, room) {
+      currentGrade = grade; currentRoom = room;
+      document.getElementById('current-class-title').innerHTML = `<span class="bg-teal-50 px-5 py-2 rounded-2xl text-teal-600 border border-teal-100 text-xs font-black shadow-sm">Grade ${grade.replace('ม.','')}/${room}</span>`;
+      document.getElementById('view-student-grid').classList.add('hidden');
+      document.getElementById('view-student-table').classList.remove('hidden');
+      document.getElementById('loading-student').classList.remove('hidden');
+      
+      google.script.run.withSuccessHandler(response => {
+        document.getElementById('loading-student').classList.add('hidden');
+        if(response.status === 'success') { studentsData = response.data; renderStudentTable(); }
+      }).getStudentsByClass(grade, room);
+    }
+
+    function renderStudentTable() {
+      const tbody = document.getElementById('student-table-body');
+      tbody.innerHTML = studentsData.length ? '' : '<tr><td colspan="4" class="py-24 text-center text-gray-300 font-black text-xs uppercase tracking-widest">ยังไม่มีรายชื่อนักเรียนในห้องนี้</td></tr>';
+      studentsData.forEach((st, idx) => {
+        tbody.innerHTML += `
+          <tr class="hover:bg-teal-50/50 transition-colors group">
+            <td class="px-8 py-5 font-mono text-gray-400 text-xs">${st.id}</td>
+            <td class="px-8 py-5 font-bold text-gray-700">${st.name}</td>
+            <td class="px-8 py-5 text-center text-gray-500">${st.gender}</td>
+            <td class="px-8 py-5 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onclick="openForm('edit', ${idx})" class="text-teal-500 hover:bg-teal-100 w-10 h-10 rounded-2xl transition mr-2"><i class="fas fa-edit"></i></button>
+              <button onclick="deleteRow(${st.rowIdx})" class="text-rose-400 hover:bg-rose-100 w-10 h-10 rounded-2xl transition"><i class="fas fa-trash"></i></button>
+            </td>
+          </tr>`;
+      });
+    }
+
+    function openForm(mode, index = -1) {
+      document.getElementById('form-modal').classList.remove('hidden');
+      if(mode === 'add') { 
+        document.getElementById('student-form').reset(); 
+        document.getElementById('form-rowIdx').value = ''; 
+        document.getElementById('form-grade').value = currentGrade;
+        document.getElementById('form-title').innerText = 'เพิ่มนักเรียนใหม่';
+      } else { 
+        const st = studentsData[index]; 
+        document.getElementById('form-rowIdx').value = st.rowIdx; 
+        document.getElementById('form-id').value = st.id; 
+        document.getElementById('form-name').value = st.name; 
+        document.getElementById('form-gender').value = st.gender; 
+        document.getElementById('form-grade').value = st.grade; 
+        document.getElementById('form-title').innerText = 'แก้ไขข้อมูลนักเรียน';
+      }
+    }
+
+    function closeForm() { document.getElementById('form-modal').classList.add('hidden'); }
+
+    function saveStudent(e) {
+      e.preventDefault(); 
+      const btn = document.getElementById('btn-save'); 
+      btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> บันทึก...';
+      const data = { 
+        rowIdx: document.getElementById('form-rowIdx').value, 
+        id: document.getElementById('form-id').value, 
+        name: document.getElementById('form-name').value, 
+        gender: document.getElementById('form-gender').value, 
+        grade: document.getElementById('form-grade').value, 
+        room: currentRoom 
+      };
+      const func = data.rowIdx ? 'updateStudent' : 'addStudent';
+      google.script.run.withSuccessHandler(res => { 
+        btn.disabled = false; btn.innerText = 'บันทึกข้อมูล'; 
+        if(res.status === 'success') { closeForm(); loadClassData(currentGrade, currentRoom); } 
+        else { Swal.fire('Error', res.message, 'error'); } 
+      })[func](data);
+    }
+
+    function deleteRow(idx) { 
+      Swal.fire({ title: 'ลบรายชื่อ?', text: "ไม่สามารถกู้คืนได้เมื่อลบไปแล้ว", icon: 'warning', showCancelButton: true, confirmButtonColor: '#f43f5e', confirmButtonText: 'ลบข้อมูล' })
+      .then(r => { if (r.isConfirmed) google.script.run.withSuccessHandler(res => { if(res.status === 'success') loadClassData(currentGrade, currentRoom); }).deleteStudent(idx); }); 
+    }
+  </script>
+</body>
+</html>
