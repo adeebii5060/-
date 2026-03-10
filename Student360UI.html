@@ -1,0 +1,216 @@
+<!-- ================= หน้า Student 360 View (ฉบับมืออาชีพ: แก้บั๊กแจ้งเตือน) ================= -->
+<div class="max-w-6xl mx-auto space-y-6 pb-10 animate-up">
+  
+  <!-- ช่องค้นหา -->
+  <div class="bg-white rounded-[2rem] shadow-xl p-6 border border-emerald-50 flex flex-col md:flex-row gap-4 items-center">
+    <div class="flex-1 w-full relative">
+      <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-emerald-400"></i>
+      <input type="text" id="search-360-input" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-14 pr-6 text-lg font-bold focus:outline-none focus:border-emerald-400 transition" placeholder="พิมพ์ รหัสนักเรียน เพื่อตรวจสอบประวัติ...">
+    </div>
+    <button onclick="fetchStudent360()" class="w-full md:w-auto bg-emerald-500 hover:bg-emerald-600 text-white px-10 py-4 rounded-2xl font-black shadow-lg shadow-emerald-100 transition transform hover:-translate-y-1">ตรวจสอบข้อมูล</button>
+  </div>
+
+  <!-- แถบแจ้งเตือนส่งต่อฝ่ายตัรบียะห์ (Alert Bar) -->
+  <div id="tarbiya-alert" class="hidden p-6 bg-gradient-to-r from-orange-500 to-amber-600 rounded-[2.5rem] text-white shadow-xl animate-up mb-6 border-b-8 border-orange-700">
+    <div class="flex flex-col md:flex-row items-center gap-6">
+      <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-3xl shadow-inner animate-bounce">
+        <i class="fas fa-pray"></i>
+      </div>
+      <div class="flex-1 text-center md:text-left">
+        <h4 class="text-xl font-black uppercase tracking-tight">นักเรียนควรได้รับการขัดเกลา (ฝ่ายตัรบียะห์)</h4>
+        <p class="text-xs font-bold opacity-90">ระบบตรวจพบว่าคะแนนติดลบสะสมจำนวนมาก หรือทำผิดซ้ำซ้อน ควรได้รับการดูแลเป็นพิเศษ</p>
+      </div>
+      <button onclick="openTarbiyaModal()" class="bg-white text-orange-600 px-8 py-3 rounded-2xl font-black text-sm hover:bg-orange-50 transition shadow-lg">
+        <i class="fas fa-paper-plane mr-2"></i> ส่งข้อมูลตอนนี้
+      </button>
+    </div>
+  </div>
+
+  <div id="result-360-content" class="hidden space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Profile Card (แถบสีเขียวซ้ายมือ) -->
+      <div class="lg:col-span-4 space-y-6">
+        <div class="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100 sticky top-6">
+          <div class="bg-gradient-to-br from-emerald-500 to-teal-700 p-8 text-center text-white">
+            <div class="w-28 h-28 bg-white rounded-3xl mx-auto mb-4 flex items-center justify-center text-5xl text-emerald-600 shadow-2xl"><i class="fas fa-user-graduate"></i></div>
+            <h2 id="view-360-name" class="text-2xl font-black"></h2>
+            <p id="view-360-id" class="text-emerald-100 text-xs font-bold tracking-widest uppercase mt-1"></p>
+            
+            <hr class="my-6 border-white/20">
+            
+            <!-- ปุ่มส่งฝ่ายตัรบียะห์แบบกดเอง (Manual Send) -->
+            <button onclick="openTarbiyaModal()" class="w-full bg-white/10 hover:bg-white/20 border border-white/30 text-white py-4 rounded-2xl text-[10px] font-black transition-all shadow-inner uppercase tracking-[0.2em]">
+               <i class="fas fa-paper-plane mr-2"></i> ส่งฝ่ายตัรบียะห์ (Manual)
+            </button>
+          </div>
+
+          <div class="p-8 space-y-4">
+            <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl">
+              <span class="text-gray-400 text-[10px] font-black uppercase">ชั้น/ห้อง</span>
+              <span id="view-360-class" class="font-black text-gray-700"></span>
+            </div>
+            <div class="pt-2">
+              <div class="flex justify-between items-end mb-2">
+                <span class="text-gray-500 font-bold text-sm">คะแนนรวมสุทธิ</span>
+                <span id="view-360-points" class="text-3xl font-black text-emerald-500">0</span>
+              </div>
+              <div class="w-full bg-gray-100 h-3 rounded-full overflow-hidden">
+                <div id="view-360-progress" class="h-full bg-emerald-500 transition-all duration-1000" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats & Timeline -->
+      <div class="lg:col-span-8 space-y-6">
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div class="bg-white p-4 rounded-2xl shadow-md border-b-4 border-emerald-400 text-center"><p class="text-[9px] font-black text-gray-400 uppercase">ปกติ</p><p id="stat-normal" class="text-xl font-black text-emerald-600">0</p></div>
+          <div class="bg-white p-4 rounded-2xl shadow-md border-b-4 border-amber-400 text-center"><p class="text-[9px] font-black text-gray-400 uppercase">สาย</p><p id="stat-late" class="text-xl font-black text-amber-500">0</p></div>
+          <div class="bg-white p-4 rounded-2xl shadow-md border-b-4 border-rose-400 text-center"><p class="text-[9px] font-black text-gray-400 uppercase">ขาด</p><p id="stat-absent" class="text-xl font-black text-rose-500">0</p></div>
+          <div class="bg-white p-4 rounded-2xl shadow-md border-b-4 border-blue-400 text-center"><p class="text-[9px] font-black text-gray-400 uppercase">ลา</p><p id="stat-leave" class="text-xl font-black text-blue-500">0</p></div>
+          <div class="bg-white p-4 rounded-2xl shadow-md border-b-4 border-purple-400 text-center"><p class="text-[9px] font-black text-gray-400 uppercase">ลืมสแกน</p><p id="stat-missing" class="text-xl font-black text-purple-500">0</p></div>
+        </div>
+
+        <div class="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden">
+          <div class="px-8 py-5 bg-gray-50/50 border-b border-gray-100 flex justify-between items-center">
+            <h3 class="font-black text-gray-700 uppercase tracking-tight text-xs"><i class="fas fa-calendar-alt mr-2 text-emerald-500"></i>Timeline กิจกรรม</h3>
+            <div class="flex bg-gray-200 p-1 rounded-xl">
+              <button onclick="switch360Tab('behavior')" id="tab-behavior" class="px-4 py-1.5 rounded-lg text-[10px] font-black transition-all bg-white text-emerald-600 shadow-sm">พฤติกรรม</button>
+              <button onclick="switch360Tab('attendance')" id="tab-attendance" class="px-4 py-1.5 rounded-lg text-[10px] font-black transition-all text-gray-500 hover:text-emerald-600">การมาเรียน</button>
+            </div>
+          </div>
+          <div class="p-8 space-y-8" id="view-360-timeline"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-360-loading" class="hidden py-20 text-center"><div class="loader mx-auto mb-4"></div><p class="text-emerald-600 font-black animate-pulse uppercase text-xs tracking-widest">กำลังดึงฐานข้อมูลรายบุคคล...</p></div>
+
+  <!-- Modal ส่งต่อฝ่ายตัรบียะห์ -->
+  <div id="tarbiya-modal" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex justify-center items-center p-4 z-[60]">
+    <div class="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg p-10 border-t-[12px] border-orange-500 animate-up">
+      <h3 class="text-2xl font-black text-gray-800 mb-2">ส่งต่อฝ่ายตัรบียะห์</h3>
+      <p class="text-xs text-gray-400 font-bold uppercase mb-8 tracking-widest">เพื่อขัดเกลาจริยธรรมและปรับทัศนคติ</p>
+      
+      <div class="space-y-6">
+        <div>
+          <label class="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-widest ml-2">บันทึกข้อสังเกตจากครูปกครอง</label>
+          <textarea id="tarbiya-note" rows="5" class="w-full bg-slate-50 border-2 border-slate-100 rounded-[2rem] p-6 text-sm font-medium focus:outline-none focus:border-orange-400 transition shadow-inner" placeholder="เช่น เด็กมีพฤติกรรมก้าวร้าวในช่วงนี้, มีปัญหาทางบ้าน..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex gap-4 mt-10">
+        <button onclick="closeTarbiyaModal()" class="flex-1 py-4 text-gray-400 font-black text-sm hover:text-rose-500 transition">ยกเลิก</button>
+        <button onclick="submitTarbiyaData()" id="btn-tarbiya-send" class="flex-[2] bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-2xl font-black text-sm shadow-xl transition transform hover:-translate-y-1">ยืนยันการส่งข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let cachedData = null;
+  let activeTab = 'behavior';
+
+  function fetchStudent360() {
+    const id = document.getElementById('search-360-input').value.trim();
+    if(!id) return;
+    document.getElementById('result-360-content').classList.add('hidden');
+    document.getElementById('tarbiya-alert').classList.add('hidden');
+    document.getElementById('view-360-loading').classList.remove('hidden');
+    
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('view-360-loading').classList.add('hidden');
+      if(res.status === 'success') { 
+        cachedData = res; 
+        render360(); 
+      } else { 
+        Swal.fire('ไม่พบรหัสนี้', res.message, 'error'); 
+      }
+    }).getStudentFullProfile(id);
+  }
+
+  function render360() {
+    document.getElementById('result-360-content').classList.remove('hidden');
+    document.getElementById('view-360-name').innerText = cachedData.profile.name;
+    document.getElementById('view-360-id').innerText = 'รหัส: ' + cachedData.profile.id;
+    document.getElementById('view-360-class').innerText = cachedData.profile.grade + '/' + cachedData.profile.room;
+    document.getElementById('view-360-points').innerText = cachedData.totalPoints;
+    
+    // ตั้งค่า Progress Bar
+    let percent = (cachedData.totalPoints / 100) * 100;
+    document.getElementById('view-360-progress').style.width = Math.max(0, Math.min(percent, 100)) + '%';
+    document.getElementById('view-360-progress').className = cachedData.totalPoints < 0 ? 'h-full bg-rose-500' : 'h-full bg-emerald-500';
+
+    document.getElementById('stat-normal').innerText = cachedData.stats.normal;
+    document.getElementById('stat-late').innerText = cachedData.stats.late;
+    document.getElementById('stat-absent').innerText = cachedData.stats.absent;
+    document.getElementById('stat-leave').innerText = cachedData.stats.leave;
+    document.getElementById('stat-missing').innerText = cachedData.stats.missingScan;
+    
+    // --- Logic แจ้งเตือนฝ่ายตัรบียะห์ ---
+    // ปรับใหม่: ถ้าคะแนนรวมติดลบ หรือ มีรายการพฤติกรรมลบมากกว่า 3 รายการ
+    const badBehaviorCount = cachedData.behavior.filter(b => b.points < 0).length;
+    if(cachedData.totalPoints <= -50 || badBehaviorCount >= 3) {
+      document.getElementById('tarbiya-alert').classList.remove('hidden');
+    }
+
+    switch360Tab(activeTab);
+  }
+
+  function switch360Tab(tab) {
+    activeTab = tab;
+    const tl = document.getElementById('view-360-timeline');
+    const bBtn = document.getElementById('tab-behavior');
+    const aBtn = document.getElementById('tab-attendance');
+    
+    bBtn.className = tab === 'behavior' ? 'px-4 py-1.5 rounded-lg text-[10px] font-black bg-white text-emerald-600 shadow-sm' : 'px-4 py-1.5 rounded-lg text-[10px] font-black text-gray-500 hover:text-emerald-600';
+    aBtn.className = tab === 'attendance' ? 'px-4 py-1.5 rounded-lg text-[10px] font-black bg-white text-emerald-600 shadow-sm' : 'px-4 py-1.5 rounded-lg text-[10px] font-black text-gray-500 hover:text-emerald-600';
+    
+    tl.innerHTML = '';
+    const logs = tab === 'behavior' ? cachedData.behavior : cachedData.attendance;
+    if(!logs.length) { tl.innerHTML = '<p class="text-center text-gray-300 font-bold py-10">ไม่พบข้อมูลในระบบ</p>'; return; }
+
+    tl.innerHTML = logs.map(item => tab === 'behavior' ? renderBehaviorCard(item) : renderAttendanceCard(item)).join('');
+  }
+
+  function renderBehaviorCard(log) {
+    const isPos = log.points > 0;
+    return `<div class="bg-white border border-gray-100 p-4 rounded-2xl shadow-sm flex items-start gap-4 mb-4"><div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center ${isPos ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'}"><i class="fas ${isPos ? 'fa-plus-circle' : 'fa-minus-circle'} text-lg"></i></div><div class="flex-1"><div class="flex justify-between items-start mb-1"><span class="text-[9px] font-bold text-gray-400">${log.date}</span><span class="font-black text-sm ${isPos ? 'text-emerald-500' : 'text-rose-500'}">${isPos?'+':''}${log.points}</span></div><p class="text-xs font-bold text-gray-700 leading-tight">${log.items}</p></div></div>`;
+  }
+
+  function renderAttendanceCard(log) {
+    let color = "emerald"; if(log.status === "สาย") color = "amber"; else if(log.status === "ขาด") color = "rose"; else if(log.status === "ลา") color = "blue";
+    return `<div class="bg-slate-50 border border-gray-100 p-4 rounded-2xl flex flex-col gap-3 relative overflow-hidden mb-4"><div class="flex justify-between items-center"><span class="text-[9px] font-bold text-gray-400 uppercase">${log.date}</span><span class="px-2 py-0.5 rounded-md bg-${color}-500 text-white text-[8px] font-black uppercase tracking-widest">${log.status}</span></div><div class="grid grid-cols-2 gap-2"><div class="bg-white p-2 rounded-xl text-center border border-gray-50"><p class="text-[7px] font-black text-gray-400 uppercase">IN</p><p class="text-xs font-black text-gray-700">${log.inTime}</p></div><div class="bg-white p-2 rounded-xl text-center border border-gray-50"><p class="text-[7px] font-black text-gray-400 uppercase">OUT</p><p class="text-xs font-black text-gray-700">${log.outTime}</p></div></div></div>`;
+  }
+
+  function openTarbiyaModal() { document.getElementById('tarbiya-modal').classList.remove('hidden'); }
+  function closeTarbiyaModal() { document.getElementById('tarbiya-modal').classList.add('hidden'); }
+
+  function submitTarbiyaData() {
+    const note = document.getElementById('tarbiya-note').value;
+    if(!note) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาระบุข้อสังเกตเบื้องต้นด้วยครับ', 'warning');
+    
+    const btn = document.getElementById('btn-tarbiya-send');
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> กำลังส่ง...';
+
+    const data = {
+      studentId: cachedData.profile.id,
+      studentName: cachedData.profile.name,
+      summary: `คะแนนสะสมติดลบ ${cachedData.totalPoints} คะแนน`,
+      note: note
+    };
+
+    google.script.run.withSuccessHandler(res => {
+      btn.disabled = false; btn.innerText = 'ยืนยันการส่งข้อมูล';
+      if(res.status === 'success') {
+        Swal.fire({ title: 'สำเร็จ!', text: 'ส่งข้อมูลให้ฝ่ายตัรบียะห์แล้ว', icon: 'success', timer: 2000 });
+        closeTarbiyaModal();
+        document.getElementById('tarbiya-alert').classList.add('hidden');
+      }
+    }).submitToTarbiya(data);
+  }
+</script>
