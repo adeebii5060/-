@@ -1,0 +1,71 @@
+<!-- ================= หน้าอัปโหลดการมาเรียน ================= -->
+<div class="max-w-4xl mx-auto pb-20">
+  
+  <div class="bg-white rounded-[2.5rem] shadow-xl border border-cyan-50 overflow-hidden animate-up">
+    <div class="bg-gradient-to-r from-cyan-500 to-blue-500 p-10 text-white text-center">
+      <div class="w-20 h-20 bg-white/20 rounded-3xl flex items-center justify-center text-4xl mx-auto mb-6 shadow-inner animate-bounce">
+        <i class="fas fa-file-import"></i>
+      </div>
+      <h2 class="text-3xl font-black mb-2">อัปโหลดไฟล์สแกนบัตร</h2>
+      <p class="text-cyan-50 opacity-80 font-light">ระบบ AI จะประมวลผลเวลาเข้า-ออก และบวกคะแนนให้อัตโนมัติ (เข้า 3 / ออก 3)</p>
+    </div>
+
+    <div class="p-10 text-center">
+      <!-- Zone สำหรับเลือกไฟล์ -->
+      <div id="drop-zone" class="border-4 border-dashed border-cyan-100 rounded-[2rem] p-16 hover:bg-cyan-50 hover:border-cyan-300 transition-all cursor-pointer group relative">
+        <input type="file" id="pdf-file" accept="application/pdf" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleFile(this)">
+        <div id="file-info" class="space-y-4">
+          <i class="fas fa-cloud-upload-alt text-6xl text-cyan-200 group-hover:text-cyan-500 transition-colors"></i>
+          <p class="text-gray-400 font-bold tracking-wide">ลากไฟล์ PDF มาวางที่นี่ หรือ <span class="text-cyan-500 underline">คลิกเพื่อเลือกไฟล์</span></p>
+        </div>
+      </div>
+
+      <!-- ส่วนโชว์ Loading -->
+      <div id="upload-loading" class="hidden mt-10 space-y-4">
+        <div class="loader mx-auto" style="border-top-color: #06b6d4; width: 50px; height: 50px;"></div>
+        <p class="text-cyan-600 font-black animate-pulse uppercase tracking-widest text-sm">AI กำลังอ่านข้อมูล PDF และคำนวณคะแนน...</p>
+        <p class="text-gray-400 text-xs">กรุณารอสักครู่ (ประมาณ 10-20 วินาทีตามขนาดไฟล์)</p>
+      </div>
+
+      <div id="success-area" class="hidden mt-10 p-6 bg-emerald-50 rounded-3xl border border-emerald-100 text-emerald-700">
+        <i class="fas fa-check-circle text-4xl mb-3"></i>
+        <h4 class="text-xl font-black">ประมวลผลสำเร็จ!</h4>
+        <p id="result-msg" class="text-sm font-medium opacity-80"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function handleFile(input) {
+    const file = input.files[0];
+    if(!file) return;
+
+    document.getElementById('drop-zone').classList.add('hidden');
+    document.getElementById('upload-loading').classList.remove('hidden');
+    document.getElementById('success-area').classList.add('hidden');
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64Data = e.target.result.split(',')[1];
+      
+      google.script.run.withSuccessHandler(res => {
+        document.getElementById('upload-loading').classList.add('hidden');
+        if(res.status === 'success') {
+          document.getElementById('success-area').classList.remove('hidden');
+          document.getElementById('result-msg').innerText = res.message;
+          Swal.fire({ title: 'สำเร็จ!', text: res.message, icon: 'success' });
+          // รีเซ็ตหลัง 3 วินาที
+          setTimeout(() => {
+             document.getElementById('drop-zone').classList.remove('hidden');
+             document.getElementById('success-area').classList.add('hidden');
+          }, 5000);
+        } else {
+          document.getElementById('drop-zone').classList.remove('hidden');
+          Swal.fire('Error', res.message, 'error');
+        }
+      }).uploadAttendancePDF(base64Data, file.name);
+    };
+    reader.readAsDataURL(file);
+  }
+</script>
