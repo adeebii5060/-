@@ -1,0 +1,219 @@
+<!-- ================= หน้าจัดการของกลาง (Confiscated Items Tracker - ฉบับเพิ่มเงื่อนไขพิเศษ) ================= -->
+<div class="max-w-6xl mx-auto space-y-8 pb-10 animate-up">
+  
+  <div class="bg-white rounded-[2.5rem] shadow-xl border border-rose-50 overflow-hidden">
+    <div class="bg-gradient-to-r from-rose-500 to-pink-600 p-8 text-white flex justify-between items-center">
+      <div class="flex items-center gap-5">
+        <div class="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+          <i class="fas fa-box-open"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl font-black">บันทึกการยึดของกลาง</h2>
+          <p class="text-rose-50 text-xs opacity-80 font-light uppercase tracking-widest">Confiscation Record System</p>
+        </div>
+      </div>
+    </div>
+
+    <form id="confiscatedForm" onsubmit="handleConfiscate(event)" class="p-8 space-y-6">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- รหัสนักเรียน (4/12) -->
+        <div class="md:col-span-4">
+          <label class="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-[0.2em] ml-2">รหัสนักเรียน</label>
+          <div class="relative">
+             <i class="fas fa-id-card absolute left-5 top-1/2 -translate-y-1/2 text-rose-300"></i>
+             <input type="text" id="con-id" required placeholder="0000" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold focus:outline-none focus:border-rose-400 transition shadow-inner">
+          </div>
+        </div>
+        <!-- ชื่อรายการ (4/12) -->
+        <div class="md:col-span-4">
+          <label class="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-[0.2em] ml-2">รายการที่ยึด</label>
+          <div class="relative">
+             <i class="fas fa-mobile-alt absolute left-5 top-1/2 -translate-y-1/2 text-rose-300"></i>
+             <input type="text" id="con-item" required placeholder="เช่น โทรศัพท์, บุหรี่ไฟฟ้า" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold focus:outline-none focus:border-rose-400 transition shadow-inner">
+          </div>
+        </div>
+        <!-- กำหนดวันคืน & เงื่อนไขพิเศษ (4/12) -->
+        <div class="md:col-span-4">
+          <label class="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-[0.2em] ml-2">เงื่อนไขการคืน</label>
+          <div class="relative mb-2">
+             <i class="fas fa-calendar-check absolute left-5 top-1/2 -translate-y-1/2 text-rose-300"></i>
+             <input type="date" id="con-due" class="w-full bg-slate-50 border-2 border-slate-100 rounded-2xl py-4 pl-12 pr-6 text-sm font-bold focus:outline-none focus:border-rose-400 transition shadow-inner">
+          </div>
+          <!-- ปุ่มลัด (Quick Options) -->
+          <div class="flex gap-2">
+            <button type="button" onclick="setSpecialDueDate('ไม่มีการคืน')" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-black rounded-xl transition">ไม่มีการคืน</button>
+            <button type="button" onclick="setSpecialDueDate('จนกว่าจะสิ้นสภาพ')" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-500 text-[10px] font-black rounded-xl transition">จนกว่าจะสิ้นสภาพ</button>
+          </div>
+          <input type="hidden" id="con-due-special" value="">
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label class="block text-[10px] font-black text-gray-400 mb-2 uppercase tracking-[0.2em] ml-2">ถ่ายรูปหลักฐาน</label>
+          <input type="file" id="con-image" accept="image/*" capture="environment" class="w-full text-xs text-gray-400 file:mr-4 file:py-3 file:px-6 file:rounded-full file:border-0 file:text-xs file:font-black file:bg-rose-50 file:text-rose-600 hover:file:bg-rose-100 cursor-pointer">
+        </div>
+        <div class="flex items-end">
+          <button type="submit" id="btn-save-con" class="w-full bg-rose-500 hover:bg-rose-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-rose-100 transition-all transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3">
+            <i class="fas fa-save"></i> บันทึกข้อมูลของกลาง
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ตารางแสดงผล -->
+  <div class="bg-white rounded-[2.5rem] shadow-xl border border-gray-100 overflow-hidden">
+    <div class="p-8 border-b bg-gray-50/50 flex justify-between items-center">
+      <h3 class="font-black text-gray-700 uppercase tracking-tight"><i class="fas fa-warehouse mr-2 text-rose-400"></i> รายการของกลางในคลัง</h3>
+      <button onclick="loadConfiscatedItems()" class="text-rose-500 hover:text-rose-700 text-xs font-black flex items-center gap-2">
+        <i class="fas fa-sync-alt"></i> รีเฟรชข้อมูล
+      </button>
+    </div>
+    
+    <div id="con-loading" class="hidden py-20 text-center">
+       <div class="loader mx-auto mb-4" style="border-top-color: #f43f5e"></div>
+       <p class="text-rose-400 font-black animate-pulse text-xs uppercase tracking-widest">กำลังดึงข้อมูล...</p>
+    </div>
+
+    <div class="overflow-x-auto custom-scroll">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 text-gray-400 text-[10px] font-black uppercase tracking-[0.2em] border-b">
+          <tr>
+            <th class="px-8 py-5 text-left">รูปหลักฐาน</th>
+            <th class="px-8 py-5 text-left">นักเรียน / รายการ</th>
+            <th class="px-8 py-5 text-center">กำหนดคืน</th>
+            <th class="px-8 py-5 text-center">สถานะ</th>
+            <th class="px-8 py-5 text-center">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="confiscated-body" class="divide-y divide-gray-50 bg-white"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ฟังก์ชันเลือกเงื่อนไขพิเศษ
+  function setSpecialDueDate(text) {
+    const dateInput = document.getElementById('con-due');
+    const specialInput = document.getElementById('con-due-special');
+    
+    dateInput.value = ''; // ล้างวันที่
+    specialInput.value = text;
+    
+    Swal.fire({
+      toast: true, position: 'top-end', icon: 'info',
+      title: `เลือกเงื่อนไข: ${text}`, showConfirmButton: false, timer: 1500
+    });
+  }
+
+  // รีเซ็ตเงื่อนไขพิเศษหากมีการเลือกวันที่ใหม่
+  document.getElementById('con-due').addEventListener('change', function() {
+    if(this.value) document.getElementById('con-due-special').value = '';
+  });
+
+  function handleConfiscate(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btn-save-con');
+    const specialVal = document.getElementById('con-due-special').value;
+    const dateVal = document.getElementById('con-due').value;
+
+    if(!specialVal && !dateVal) return Swal.fire('ข้อมูลไม่ครบ', 'กรุณาเลือกวันที่คืน หรือเงื่อนไขพิเศษ', 'warning');
+
+    btn.disabled = true; 
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังบันทึก...';
+
+    const fileInput = document.getElementById('con-image');
+    if (fileInput.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = (e) => saveConfiscatedData(e.target.result);
+      reader.readAsDataURL(fileInput.files[0]);
+    } else {
+      saveConfiscatedData(null);
+    }
+  }
+
+  function saveConfiscatedData(base64Image) {
+    const specialVal = document.getElementById('con-due-special').value;
+    const dateVal = document.getElementById('con-due').value;
+    
+    const data = {
+      studentId: document.getElementById('con-id').value,
+      itemName: document.getElementById('con-item').value,
+      returnDueDate: specialVal || dateVal, // ใช้ค่าพิเศษถ้ามี ถ้าไม่มีใช้วันที่
+      imageFile: base64Image
+    };
+
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('btn-save-con').disabled = false;
+      document.getElementById('btn-save-con').innerHTML = '<i class="fas fa-save"></i> บันทึกข้อมูลของกลาง';
+      if(res.status === 'success') {
+        Swal.fire({ title: 'สำเร็จ!', text: 'บันทึกเรียบร้อย', icon: 'success', timer: 1500, showConfirmButton: false });
+        document.getElementById('confiscatedForm').reset();
+        document.getElementById('con-due-special').value = '';
+        loadConfiscatedItems();
+      }
+    }).saveConfiscatedItem(data);
+  }
+
+  function loadConfiscatedItems() {
+    document.getElementById('confiscated-body').innerHTML = '';
+    document.getElementById('con-loading').classList.remove('hidden');
+
+    google.script.run.withSuccessHandler(res => {
+      document.getElementById('con-loading').classList.add('hidden');
+      const tbody = document.getElementById('confiscated-body');
+      
+      if(res.data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-20 text-center text-gray-300 font-bold text-xs uppercase">ไม่พบข้อมูล</td></tr>';
+        return;
+      }
+
+      res.data.forEach(item => {
+        const isReturned = item.status === 'คืนแล้ว';
+        const isSpecial = item.returnDueDate === 'ไม่มีการคืน' || item.returnDueDate === 'จนกว่าจะสิ้นสภาพ';
+        
+        tbody.innerHTML += `
+          <tr class="hover:bg-rose-50/30 transition-colors group">
+            <td class="px-8 py-5">
+              ${item.imageUrl ? `<img src="${item.imageUrl}" class="w-16 h-16 rounded-2xl object-cover border-2 shadow-sm hover:scale-110 transition-transform cursor-pointer" onclick="window.open('${item.imageUrl}')">` : '<div class="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-300"><i class="fas fa-image"></i></div>'}
+            </td>
+            <td class="px-8 py-5">
+              <div class="font-black text-gray-800">${item.studentName}</div>
+              <div class="text-[10px] text-gray-400 font-bold mb-1">ID: ${item.studentId}</div>
+              <div class="inline-block px-3 py-0.5 rounded-lg bg-rose-50 text-rose-500 font-bold text-xs">${item.itemName}</div>
+            </td>
+            <td class="px-8 py-5 text-center">
+              <span class="${isSpecial ? 'bg-amber-50 text-amber-600' : 'text-gray-500'} px-3 py-1 rounded-lg font-bold text-[11px]">
+                ${item.returnDueDate}
+              </span>
+            </td>
+            <td class="px-8 py-5 text-center">
+              <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase ${isReturned ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600 animate-pulse'}">
+                ${item.status}
+              </span>
+            </td>
+            <td class="px-8 py-5 text-center">
+              ${!isReturned ? `<button onclick="confirmReturn(${item.rowIdx})" class="bg-gray-800 hover:bg-emerald-600 text-white text-[10px] font-black px-5 py-2.5 rounded-xl transition-all shadow-lg mx-auto flex items-center gap-2 justify-center"><i class="fas fa-undo"></i> คืนของ</button>` : `<div class="text-emerald-500 font-black text-xs">${item.actualReturnDate}</div>`}
+            </td>
+          </tr>
+        `;
+      });
+    }).getConfiscatedItems();
+  }
+
+  function confirmReturn(idx) {
+    Swal.fire({
+      title: 'ยืนยันการคืนของ?', text: "นักเรียนได้รับของคืนเรียบร้อยแล้วใช่ไหม?", icon: 'question',
+      showCancelButton: true, confirmButtonColor: '#10b981', cancelButtonColor: '#f43f5e', confirmButtonText: 'ยืนยัน คืนแล้ว'
+    }).then(result => {
+      if(result.isConfirmed) {
+        google.script.run.withSuccessHandler(() => {
+          Swal.fire({ title: 'สำเร็จ!', icon: 'success', timer: 1000, showConfirmButton: false });
+          loadConfiscatedItems();
+        }).markAsReturned(idx);
+      }
+    });
+  }
+</script>
