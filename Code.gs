@@ -25,11 +25,36 @@ function openDashboard() {
 }
 
 function doGet(e) {
+  // --- ส่วนประตูหลังบ้านสำหรับ API สแกนใบหน้า ---
+  if (e && e.parameter && e.parameter.action === 'getKnownFaces') {
+    const result = getKnownFaces(); // เรียกใช้จาก FaceAPI.gs
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // --- ส่วนหน้าเว็บแอปเดิมของคุณ (เปิดหน้า UI) ---
+  // เช็คชื่อไฟล์ Index ให้ตรงกับที่คุณมี
   return HtmlService.createTemplateFromFile('Index').evaluate()
-    .setTitle('ระบบฝ่ายปกครอง | Sasanupatham')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1');
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setTitle('ระบบนักเรียน');
 }
 
+// --- สร้างประตูรับข้อมูล (POST) สำหรับเว็บสแกนหน้า ---
+function doPost(e) {
+  if (e && e.postData && e.postData.contents) {
+    try {
+      const data = JSON.parse(e.postData.contents);
+      const result = processFacePostRequest(data); // โยนไปให้ FaceAPI.gs
+      return ContentService.createTextOutput(JSON.stringify(result))
+        .setMimeType(ContentService.MimeType.JSON);
+    } catch (err) {
+      return ContentService.createTextOutput(JSON.stringify({ error: err.message }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({ error: "No data received" }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
 /**
  * ส่วนที่ 2: ระบบตรวจสอบประวัติรายบุคคล (Student 360 Profile)
  */
